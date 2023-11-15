@@ -32,6 +32,12 @@ def mongodb_copy(source_url, target_url, progress: bool = False):
     mongodb_database = mongodb_collection_address.schema
     mongodb_collection = mongodb_collection_address.table
 
+    # 0. Sanity checks.
+    if mongodb_database is None:
+        raise ValueError("MongoDB database not given or empty")
+    if mongodb_collection is None:
+        raise ValueError("MongoDB collection not given or empty")
+
     # 1. Extract schema from MongoDB collection.
     logger.info(f"Extracting schema from MongoDB: {mongodb_database}.{mongodb_collection}")
     extract_args = argparse.Namespace(

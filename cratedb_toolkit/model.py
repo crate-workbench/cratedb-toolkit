@@ -17,14 +17,14 @@ class DatabaseAddress:
     uri: URL
 
     @classmethod
-    def from_string(cls, url):
+    def from_string(cls, url: str) -> "DatabaseAddress":
         """
         Factory method to create an instance from an SQLAlchemy database URL in string format.
         """
         return cls(uri=URL(url))
 
     @classmethod
-    def from_httpuri(cls, url):
+    def from_httpuri(cls, url: str) -> "DatabaseAddress":
         """
         Factory method to create an instance from an HTTP URL in string format.
         """
@@ -33,6 +33,13 @@ class DatabaseAddress:
             uri.query_params["ssl"] = "true"
         uri.scheme = "crate"
         return cls(uri=uri)
+
+    def with_credentials(self, username: str = None, password: str = None):
+        if username is not None:
+            self.uri.username = username
+        if password is not None:
+            self.uri.password = password
+        return self
 
     @property
     def dburi(self) -> str:

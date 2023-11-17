@@ -2,10 +2,12 @@
 # Distributed under the terms of the AGPLv3 license, see LICENSE.
 import os
 import json
+import os
 
 import pytest
 import responses
 
+from cratedb_toolkit.api.main import ManagedClusterSettings
 from cratedb_toolkit.testing.testcontainers.cratedb import CrateDBTestAdapter
 from cratedb_toolkit.testing.testcontainers.util import PytestTestcontainerAdapter
 from cratedb_toolkit.util import DatabaseAdapter
@@ -215,6 +217,22 @@ def mock_cloud_import():
             }
         ],
     )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def reset_environment():
+    """
+    Reset all environment variables in use, so that they do not pollute the test suite.
+    """
+    envvars = []
+    specs = ManagedClusterSettings.settings_spec
+    for spec in specs:
+        envvars.append(spec.click.envvar)
+    for envvar in envvars:
+        try:
+            del os.environ[envvar]
+        except KeyError:
+            pass
 
 
 setup_logging()

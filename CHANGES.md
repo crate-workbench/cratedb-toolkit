@@ -13,7 +13,7 @@
 - MongoDB: Add `migr8` program from previous repository
 - MongoDB: Improve UX by using `ctk load table mongodb://...`
 - load table: Refactor to use more OO
-- Add `examples/cloud_import.py`
+- Cloud API: SDK and CLI for CrateDB Cloud Cluster and Import APIs
 
 
 ## 2023/11/06 v0.0.2

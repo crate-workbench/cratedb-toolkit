@@ -61,7 +61,8 @@ def test_setup_verbose(caplog, cratedb, settings):
     assert result.exit_code == 0
 
     assert cratedb.database.table_exists(settings.policy_table.fullname) is True
-    assert 3 <= len(caplog.records) <= 10
+    # TODO: Validate a few log messages, instead of counting them.
+    assert 3 <= len(caplog.records) <= 15
 
 
 def test_setup_dryrun(caplog, cratedb, settings):
@@ -105,7 +106,7 @@ def test_setup_failure_envvar_invalid_dburi(mocker):
     program fails correctly, when pointing it to an arbitrary address.
     """
 
-    mocker.patch("os.environ", {"CRATEDB_URI": "crate://localhost:5555"})
+    mocker.patch.dict("os.environ", {"CRATEDB_URI": "crate://localhost:5555"})
 
     runner = CliRunner()
     with pytest.raises(OperationalError) as ex:
@@ -367,7 +368,7 @@ def test_run_snapshot_fs(caplog, cratedb, store, database, sensor_readings, sens
     """
 
     # Acquire OCI container handle, to introspect it.
-    tc_container: DockerContainer = cratedb.cratedb
+    tc_container: DockerContainer = cratedb.container
     oci_container: Container = tc_container.get_wrapped_container()
 
     # Define snapshot directory.

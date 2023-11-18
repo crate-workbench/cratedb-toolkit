@@ -2,6 +2,8 @@ import logging
 
 import pytest
 
+from cratedb_toolkit.testing.testcontainers.util import PytestTestcontainerAdapter
+
 logger = logging.getLogger(__name__)
 
 
@@ -11,7 +13,7 @@ RESET_DATABASES = [
 ]
 
 
-class MongoDBFixture:
+class MongoDBFixture(PytestTestcontainerAdapter):
     """
     A little helper wrapping Testcontainer's `MongoDbContainer`.
     """
@@ -21,7 +23,7 @@ class MongoDBFixture:
 
         self.container = None
         self.client: MongoClient = None
-        self.setup()
+        super().__init__()
 
     def setup(self):
         # TODO: Make image name configurable.
@@ -30,9 +32,6 @@ class MongoDBFixture:
         self.container = MongoDbContainerWithKeepalive()
         self.container.start()
         self.client = self.container.get_connection_client()
-
-    def finalize(self):
-        self.container.stop()
 
     def reset(self):
         """
@@ -56,7 +55,7 @@ def mongodb_service():
     db = MongoDBFixture()
     db.reset()
     yield db
-    db.finalize()
+    db.stop()
 
 
 @pytest.fixture(scope="function")

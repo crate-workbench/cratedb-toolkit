@@ -6,4 +6,5 @@ __pycache__
 *.pyc
 dist
 .coverage*
+.env
 coverage.xml

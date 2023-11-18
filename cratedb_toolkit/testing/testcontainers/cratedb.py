@@ -18,12 +18,12 @@ from testcontainers.core.config import MAX_TRIES
 from testcontainers.core.generic import DbContainer
 from testcontainers.core.waiting_utils import wait_container_is_ready, wait_for_logs
 
-from cratedb_toolkit.testing.testcontainers.util import KeepaliveContainer, asbool
+from cratedb_toolkit.testing.testcontainers.util import DockerSkippingContainer, KeepaliveContainer, asbool
 
 logger = logging.getLogger(__name__)
 
 
-class CrateDBContainer(KeepaliveContainer, DbContainer):
+class CrateDBContainer(DockerSkippingContainer, KeepaliveContainer, DbContainer):
     """
     CrateDB database container.
 
@@ -34,7 +34,7 @@ class CrateDBContainer(KeepaliveContainer, DbContainer):
 
         .. doctest::
 
-            >>> from tests.testcontainers.cratedb import CrateDBContainer
+            >>> from cratedb_toolkit.testing.testcontainers.cratedb import CrateDBContainer
             >>> import sqlalchemy
 
             >>> cratedb_container = CrateDBContainer("crate:5.2.3")
@@ -84,9 +84,11 @@ class CrateDBContainer(KeepaliveContainer, DbContainer):
         self.with_env("CRATEDB_PASSWORD", self.CRATEDB_PASSWORD)
         self.with_env("CRATEDB_DB", self.CRATEDB_DB)
 
+    @wait_container_is_ready()
     def get_connection_url(self, host=None) -> str:
         # TODO: When using `db_name=self.CRATEDB_DB`:
         #       Connection.__init__() got an unexpected keyword argument 'database'
+        wait_for_logs(self, predicate="o.e.n.Node.*started", timeout=MAX_TRIES)
         return super()._create_connection_url(
             dialect=self.dialect,
             username=self.CRATEDB_USER,

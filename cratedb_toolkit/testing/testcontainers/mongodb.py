@@ -12,12 +12,13 @@
 #    under the License.
 import os
 
+from testcontainers.core.waiting_utils import wait_container_is_ready
 from testcontainers.mongodb import MongoDbContainer
 
-from cratedb_toolkit.testing.testcontainers.util import KeepaliveContainer
+from cratedb_toolkit.testing.testcontainers.util import DockerSkippingContainer, KeepaliveContainer
 
 
-class MongoDbContainerWithKeepalive(KeepaliveContainer, MongoDbContainer):
+class MongoDbContainerWithKeepalive(DockerSkippingContainer, KeepaliveContainer, MongoDbContainer):
     """
     A Testcontainer for MongoDB with improved configurability.
 
@@ -39,3 +40,7 @@ class MongoDbContainerWithKeepalive(KeepaliveContainer, MongoDbContainer):
     ) -> None:
         super().__init__(image=image, **kwargs)
         self.with_name("testcontainers-mongodb")
+
+    @wait_container_is_ready()
+    def get_connection_url(self):
+        return super().get_connection_url()

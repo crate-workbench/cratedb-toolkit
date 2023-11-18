@@ -7,6 +7,7 @@ from .cluster.cli import cli as cloud_cli
 from .io.cli import cli as io_cli
 from .job.cli import cli_list_jobs
 from .shell.cli import cli as shell_cli
+from .util.setting import init_dotenv
 
 
 @click.group(cls=ClickAliasedGroup)  # type: ignore[arg-type]
@@ -15,6 +16,7 @@ from .shell.cli import cli as shell_cli
 @click.version_option()
 @click.pass_context
 def cli(ctx: click.Context, verbose: bool, debug: bool):
+    init_dotenv()
     return boot_click(ctx, verbose, debug)
 
 

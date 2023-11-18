@@ -4,6 +4,7 @@ import click
 from click_aliases import ClickAliasedGroup
 
 from cratedb_toolkit.api.main import ClusterBase, ManagedCluster, StandaloneCluster
+from cratedb_toolkit.common import option_cluster_id, option_cluster_name
 from cratedb_toolkit.model import DatabaseAddress, InputOutputResource, TableAddress
 from cratedb_toolkit.util.cli import boot_click, make_command
 
@@ -24,9 +25,8 @@ def cli(ctx: click.Context, verbose: bool, debug: bool):
 
 @make_command(cli, name="table")
 @click.argument("url")
-@click.option(
-    "--cluster-id", envvar="CRATEDB_CLOUD_CLUSTER_ID", type=str, required=False, help="CrateDB Cloud cluster identifier"
-)
+@option_cluster_id
+@option_cluster_name
 @click.option(
     "--cratedb-sqlalchemy-url", envvar="CRATEDB_SQLALCHEMY_URL", type=str, required=False, help="CrateDB SQLAlchemy URL"
 )
@@ -40,6 +40,7 @@ def load_table(
     ctx: click.Context,
     url: str,
     cluster_id: str,
+    cluster_name: str,
     cratedb_sqlalchemy_url: str,
     cratedb_http_url: str,
     schema: str,
@@ -53,33 +54,26 @@ def load_table(
 
     error_message = (
         "Either CrateDB Cloud Cluster identifier or CrateDB SQLAlchemy or HTTP URL needs to be supplied. "
-        "Use --cluster-id / --cratedb-sqlalchemy-url / --cratedb-http-url CLI options "
-        "or CRATEDB_CLOUD_CLUSTER_ID / CRATEDB_SQLALCHEMY_URL / CRATEDB_HTTP_URL environment variables."
+        "Use --cluster-id / --cluster-name / --cratedb-sqlalchemy-url / --cratedb-http-url CLI options "
+        "or CRATEDB_CLOUD_CLUSTER_ID / CRATEDB_CLOUD_CLUSTER_NAME / CRATEDB_SQLALCHEMY_URL / CRATEDB_HTTP_URL "
+        "environment variables."
     )
-
-    if not cluster_id and not cratedb_sqlalchemy_url and not cratedb_http_url:
-        raise KeyError(error_message)
-
-    # When SQLAlchemy URL is not given, but HTTP URL is, compute the former on demand.
-    if cluster_id:
-        address = None
-    elif cratedb_sqlalchemy_url:
-        address = DatabaseAddress.from_string(cratedb_sqlalchemy_url)
-    elif cratedb_http_url:
-        address = DatabaseAddress.from_httpuri(cratedb_sqlalchemy_url)
-    else:
-        raise KeyError(error_message)
 
     # Encapsulate source and target parameters.
     source = InputOutputResource(url=url, format=format_, compression=compression)
     target = TableAddress(schema=schema, table=table)
 
     # Dispatch "load table" operation.
+    # TODO: Unify cluster factory.
     cluster: ClusterBase
-    if cluster_id:
-        cluster = ManagedCluster(id=cluster_id)
-    elif address:
+    if cluster_id is not None or cluster_name is not None:
+        cluster = ManagedCluster(id=cluster_id, name=cluster_name)
+    elif cratedb_sqlalchemy_url or cratedb_http_url:
+        if cratedb_sqlalchemy_url:
+            address = DatabaseAddress.from_string(cratedb_sqlalchemy_url)
+        elif cratedb_http_url:
+            address = DatabaseAddress.from_httpuri(cratedb_sqlalchemy_url)
         cluster = StandaloneCluster(address=address)
     else:
-        raise NotImplementedError("Unable to select backend")
+        raise KeyError(error_message)
     return cluster.load_table(source=source, target=target)

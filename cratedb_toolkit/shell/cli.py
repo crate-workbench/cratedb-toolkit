@@ -1,6 +1,7 @@
 import click
 
-from cratedb_toolkit.cluster.util import get_cluster_info
+from cratedb_toolkit.cluster.util import get_cluster_by_id_or_name
+from cratedb_toolkit.common import option_cluster_id, option_cluster_name
 from cratedb_toolkit.util.cli import boot_click
 from cratedb_toolkit.util.crash import get_crash_output_formats, run_crash
 
@@ -8,9 +9,8 @@ output_formats = get_crash_output_formats()
 
 
 @click.command()
-@click.option(
-    "--cluster-id", envvar="CRATEDB_CLOUD_CLUSTER_ID", type=str, required=True, help="CrateDB Cloud cluster identifier"
-)
+@option_cluster_id
+@option_cluster_name
 @click.option("--username", envvar="CRATEDB_USERNAME", type=str, required=False, help="Username for CrateDB cluster")
 @click.option("--password", envvar="CRATEDB_PASSWORD", type=str, required=False, help="Password for CrateDB cluster")
 @click.option(
@@ -35,6 +35,7 @@ output_formats = get_crash_output_formats()
 def cli(
     ctx: click.Context,
     cluster_id: str,
+    cluster_name: str,
     username: str,
     password: str,
     schema: str,
@@ -51,7 +52,7 @@ def cli(
     """
     boot_click(ctx, verbose, debug)
 
-    cluster_info = get_cluster_info(cluster_id=cluster_id)
+    cluster_info = get_cluster_by_id_or_name(cluster_id=cluster_id, cluster_name=cluster_name)
     cratedb_http_url = cluster_info.cloud["url"]
 
     run_crash(

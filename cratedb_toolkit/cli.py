@@ -9,8 +9,8 @@ from .cluster.cli import cli as cloud_cli
 from .io.cli import cli as io_cli
 from .job.cli import cli_list_jobs
 from .shell.cli import cli as shell_cli
-from .wtf.cli import cli as wtf_cli
 from .util.setting import init_dotenv
+from .wtf.cli import cli as wtf_cli
 
 
 @click.group(cls=ClickAliasedGroup)  # type: ignore[arg-type]

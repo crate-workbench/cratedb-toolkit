@@ -1,6 +1,6 @@
 import click
 
-from cratedb_toolkit.cluster.util import get_cluster_by_id_or_name
+from cratedb_toolkit.cluster.model import ClusterInformation
 from cratedb_toolkit.common import option_cluster_id, option_cluster_name
 from cratedb_toolkit.util.cli import boot_click
 from cratedb_toolkit.util.crash import get_crash_output_formats, run_crash
@@ -52,7 +52,7 @@ def cli(
     """
     boot_click(ctx, verbose, debug)
 
-    cluster_info = get_cluster_by_id_or_name(cluster_id=cluster_id, cluster_name=cluster_name)
+    cluster_info = ClusterInformation.from_id_or_name(cluster_id=cluster_id, cluster_name=cluster_name)
     cratedb_http_url = cluster_info.cloud["url"]
 
     run_crash(

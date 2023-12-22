@@ -90,11 +90,10 @@ dependencies = [
   "colorama<1",
   "colorlog",
   "crash",
-  "crate[sqlalchemy]>=0.34",
   "croud==1.8",
   'importlib-metadata; python_version <= "3.7"',
   "python-dotenv<2",
-  "sqlalchemy",
+  "sqlalchemy-cratedb@ git+https://github.com/crate-workbench/sqlalchemy-cratedb.git@amo/fix-inspector",
   "sqlparse<0.5",
 ]
 [project.optional-dependencies]

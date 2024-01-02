@@ -92,10 +92,12 @@ dependencies = [
   "crash",
   "crate[sqlalchemy]>=0.34",
   "croud==1.8",
+  "fastapi<0.105",
   'importlib-metadata; python_version <= "3.7"',
   "python-dotenv<2",
   "sqlalchemy",
   "sqlparse<0.5",
+  "uvicorn<0.25",
 ]
 [project.optional-dependencies]
 all = [
@@ -114,7 +116,7 @@ influxdb = [
 ]
 io = [
   "cr8",
-  "dask>=2020,<=2023.11.0",
+  "dask<=2023.11.0,>=2020",
   "pandas<3,>=1",
 ]
 mongodb = [
@@ -147,6 +149,7 @@ repository = "https://github.com/crate-workbench/cratedb-toolkit"
 [project.scripts]
 cratedb-retention = "cratedb_toolkit.retention.cli:cli"
 cratedb-toolkit = "cratedb_toolkit.cli:cli"
+cratedb-wtf = "cratedb_toolkit.wtf.cli:cli"
 ctk = "cratedb_toolkit.cli:cli"
 migr8 = "cratedb_toolkit.io.mongodb.cli:main"
 

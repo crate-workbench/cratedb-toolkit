@@ -157,6 +157,7 @@ mongodb = [
 release = [
   "build<2",
   "twine<6",
+  "pyinstaller<7",
 ]
 service = [
   "fastapi<0.105",
@@ -186,8 +187,10 @@ repository = "https://github.com/crate-workbench/cratedb-toolkit"
 cratedb-retention = "cratedb_toolkit.retention.cli:cli"
 cratedb-toolkit = "cratedb_toolkit.cli:cli"
 cratedb-wtf = "cratedb_toolkit.wtf.cli:cli"
+cratedb-cfr = "cratedb_toolkit.cfr.cli:cli"
 ctk = "cratedb_toolkit.cli:cli"
 migr8 = "cratedb_toolkit.io.mongodb.cli:main"
+
 [project.entry-points.pytest11]
 cratedb_service = "cratedb_toolkit.testing.pytest"
 
@@ -341,3 +344,5 @@ release = [
 ]
 
 test = { cmd = "pytest" }
+
+build-cfr = { cmd = "pyinstaller cratedb_toolkit/cfr/cli.py --onefile --name cratedb-cfr"}

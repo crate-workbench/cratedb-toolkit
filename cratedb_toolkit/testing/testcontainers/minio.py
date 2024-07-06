@@ -12,12 +12,13 @@
 #    under the License.
 import typing as t
 
+from testcontainers.core.waiting_utils import wait_container_is_ready
 from testcontainers.minio import MinioContainer
 
-from cratedb_toolkit.testing.testcontainers.util import ExtendedDockerContainer
+from cratedb_toolkit.testing.testcontainers.util import DockerSkippingContainer, ExtendedDockerContainer
 
 
-class ExtendedMinioContainer(ExtendedDockerContainer, MinioContainer):
+class ExtendedMinioContainer(DockerSkippingContainer, ExtendedDockerContainer, MinioContainer):
     """
     An extended Testcontainer for MinIO, emulating AWS S3.
 
@@ -38,6 +39,7 @@ class ExtendedMinioContainer(ExtendedDockerContainer, MinioContainer):
 
         super().__init__(*args, **kwargs)
 
+    @wait_container_is_ready()
     def list_object_names(self, bucket_name: str) -> t.List[str]:
         """
         Return list of object names within given bucket.

@@ -166,7 +166,9 @@ service = [
 test = [
   "cratedb-toolkit[testing]",
   "httpx<0.28",
-  "pueblo[dataframe]",
+  "ipywidgets<9",
+  "notebook<8",
+  "pueblo[dataframe,notebook,testing]",
   "pytest<9",
   "pytest-cov<6",
   "pytest-mock<4",
@@ -222,7 +224,7 @@ non_interactive = true
 [tool.pytest.ini_options]
 addopts = """
   -rfEXs -p pytester --strict-markers --verbosity=3
-  --cov --cov-report=term-missing --cov-report=xml
+  --cov=. --cov-report=term-missing --cov-report=xml
   """
 minversion = "2.0"
 log_level = "DEBUG"
@@ -238,6 +240,8 @@ markers = [
   "examples",
   "influxdb",
   "mongodb",
+  "python",
+  "shell",
   "slow",
 ]
 

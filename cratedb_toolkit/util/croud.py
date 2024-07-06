@@ -68,6 +68,18 @@ class CroudWrapper:
         except Exception:
             raise
 
+    @staticmethod
+    def remove_version_argument(parser):
+        for action in parser._actions:
+            if "--version" in str(action):
+                parser._remove_action(action)
+        to_delete = []
+        for key, action in parser._option_string_actions.items():
+            if "--version" in str(action):
+                to_delete.append(key)
+        for delete in to_delete:
+            del parser._option_string_actions[delete]
+
     def invoke_real(self) -> t.Any:
         """
         Invoke croud function, decode response from JSON, and return data.
@@ -80,6 +92,7 @@ class CroudWrapper:
             "extra_args": [],
         }
         parser = create_parser(spec)
+        self.remove_version_argument(parser)
         add_default_args(parser, omit=set())
 
         # Add command-specific arguments to parser.
@@ -132,21 +145,28 @@ class CroudWrapper:
         def print_fun(levelname: str, *args, **kwargs):
             level = get_sane_log_level(levelname)
             message = str(args[0])
-            logger.log(level, message)
+
+            # Forward/propagate/emit log message from `croud`, or not.
+            # Variant 1: Forward original log message 1:1.
+            # logger.log(level, message)  # noqa: ERA001
+            # Variant 2: Augment log message: Converge to `DEBUG` level.
+            logger.log(logging.DEBUG, f"[croud] {levelname.upper():<8}: {message}")
+            # TODO: Variant 3: Use setting in `EnvironmentConfiguration` to turn forwarding on/off.
+
             if with_exceptions and level >= logging.ERROR:
                 raise CroudException(message)
 
-        # Patch all `print_*` functions, and invoke_foo workhorse function.
+        # Patch all `print_*` functions, and invoke workhorse function.
         # https://stackoverflow.com/a/46481946
         levels = ["debug", "info", "warning", "error", "success"]
         with contextlib.ExitStack() as stack:
             for level in levels:
                 p = patch(f"croud.printer.print_{level}", functools.partial(print_fun, level))
                 stack.enter_context(p)
+            # TODO: When aiming to disable wait-for-completion.
             """
-            TODO: When aiming to disable wait-for-completion.
-                  p = patch(f"croud.clusters.commands._wait_for_completed_operation")
-                  stack.enter_context(p)
+            p = patch(f"croud.clusters.commands._wait_for_completed_operation")
+            stack.enter_context(p)
             """
             return fun()
 
@@ -168,3 +188,17 @@ def get_croud_output_formats() -> t.List[str]:
     from croud.config.schemas import OUTPUT_FORMATS
 
     return OUTPUT_FORMATS
+
+
+def table_fqn(table: str) -> str:
+    """
+    Return the table name, quoted, like `"<table>"`. When applicable,
+    use the full qualified name `"<schema>"."<table>"`.
+    """
+    if '"' in table:
+        return table
+    if "." in table:
+        schema, table = table.split(".")
+        return f'"{schema}"."{table}"'
+    else:
+        return f'"{table}"'

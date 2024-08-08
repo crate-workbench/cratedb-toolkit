@@ -33,7 +33,10 @@ the type with the greatest proportion.
 
 from functools import reduce
 
+from cratedb_toolkit.io.mongodb.util import sanitize_field_names
+
 TYPES = {
+    "OID": "TEXT",
     "DATETIME": "TIMESTAMP WITH TIME ZONE",
     "INT64": "INTEGER",
     "STRING": "TEXT",
@@ -95,7 +98,7 @@ def translate_array(schema):
 
 def determine_type(schema):
     """
-    Determine the type of a specific field schema.
+    Determine the type of specific field schema.
     """
 
     types = schema.get("types", {})
@@ -108,9 +111,9 @@ def determine_type(schema):
             sql_type = translate_array(types["ARRAY"])
 
         if len(types) > 1:
-            return (sql_type, proportion_string(types))
-        return (sql_type, None)
-    return ("UNKNOWN", None)
+            return sql_type, proportion_string(types)
+        return sql_type, None
+    return "UNKNOWN", None
 
 
 def proportion_string(types: dict) -> str:
@@ -157,7 +160,8 @@ def translate(schemas, schemaname: str = None):
     for tablename in tables:
         collection = schemas[tablename]
         columns = []
-        for fieldname, field in collection["document"].items():
+        fields = sanitize_field_names(collection["document"])
+        for fieldname, field in fields.items():
             sql_type, comment = determine_type(field)
             if sql_type != "UNKNOWN":
                 columns.append((COLUMN.format(column_name=fieldname, type=sql_type), comment))

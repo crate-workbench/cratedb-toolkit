@@ -25,32 +25,20 @@ Export the documents from a MongoDB collection as JSON, to be ingested into Crat
 """
 
 import calendar
-import re
-import sys
 import typing as t
-from datetime import datetime, timedelta
 
 import bsonjs
+import dateutil.parser as dateparser
 import orjson as json
 import pymongo.collection
 
-_TZINFO_RE = re.compile(r"([+\-])?(\d\d):?(\d\d)")
+from cratedb_toolkit.io.mongodb.util import sanitize_field_names
 
 
 def date_converter(value):
     if isinstance(value, int):
         return value
-    dt = datetime.strptime(value[:-5], "%Y-%m-%dT%H:%M:%S.%f")
-    iso_match = _TZINFO_RE.match(value[-5:])
-    if iso_match:
-        sign, hours, minutes = iso_match.groups()
-        tzoffset = int(hours) * 3600 + int(minutes) * 60
-        if sign == "-":
-            dt = dt + timedelta(seconds=tzoffset)
-        else:
-            dt = dt - timedelta(seconds=tzoffset)
-    else:
-        raise Exception("Can't parse datetime string {0}".format(value))
+    dt = dateparser.parse(value)
     return calendar.timegm(dt.utctimetuple()) * 1000
 
 
@@ -68,6 +56,12 @@ type_converter = {
 
 
 def extract_value(value, parent_type=None):
+    """
+    Decode MongoDB Extended JSON.
+
+    - https://www.mongodb.com/docs/manual/reference/mongodb-extended-json-v1/
+    - https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/
+    """
     if isinstance(value, dict):
         if len(value) == 1:
             for k, v in value.items():
@@ -84,14 +78,16 @@ def extract_value(value, parent_type=None):
 
 
 def convert(d):
+    """
+    Decode MongoDB Extended JSON, considering CrateDB specifics.
+    """
     newdict = {}
-    del d["_id"]
-    for k, v in d.items():
+    for k, v in sanitize_field_names(d).items():
         newdict[k] = extract_value(v)
     return newdict
 
 
-def collection_to_json(collection: pymongo.collection.Collection, file: t.IO[t.Any] = None):
+def collection_to_json(collection: pymongo.collection.Collection, fp: t.IO[t.Any], limit: int = 0):
     """
     Export a MongoDB collection's documents to standard JSON.
     The output is suitable to be consumed by the `cr8` program.
@@ -100,11 +96,10 @@ def collection_to_json(collection: pymongo.collection.Collection, file: t.IO[t.A
       a Pymongo collection object.
 
     file
-      a file-like object (stream); defaults to the current sys.stdout.
+      a file-like object (stream).
     """
-    file = file or sys.stdout.buffer
-    for document in collection.find():
+    for document in collection.find().limit(limit):
         bson_json = bsonjs.dumps(document.raw)
         json_object = json.loads(bson_json)
-        file.write(json.dumps(convert(json_object)))
-        file.write(b"\n")
+        fp.write(json.dumps(convert(json_object)))
+        fp.write(b"\n")

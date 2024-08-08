@@ -2,6 +2,16 @@
 
 
 ## Unreleased
+- MongoDB: Fix missing output on STDOUT for `migr8 export`
+- MongoDB: Improve timestamp parsing by using `python-dateutil`
+- MongoDB: Converge `_id` input field to `id` column instead of dropping it
+- MongoDB: Make user interface use stderr, so stdout is for data only
+- MongoDB: Make `migr8 extract` write to stdout by default
+- MongoDB: Make `migr8 translate` read from stdin by default
+- MongoDB: Improve user interface messages
+- MongoDB: Strip single leading underscore character from all top-level fields
+- MongoDB: Map OID types to CrateDB TEXT columns
+- MongoDB: Make `migr8 export` accept the `--limit` option
 
 ## 2024/07/25 v0.0.16
 - `ctk load table`: Added support for MongoDB Change Streams

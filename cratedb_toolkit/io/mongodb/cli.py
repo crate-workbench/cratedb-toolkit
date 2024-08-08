@@ -1,10 +1,15 @@
 import argparse
 import json
+import sys
+import typing as t
 
-import rich
+from rich.console import Console
 
 from cratedb_toolkit import __version__
 from cratedb_toolkit.io.mongodb.core import export, extract, translate
+
+console = Console(stderr=True)
+rich = console
 
 
 def extract_parser(subargs):
@@ -19,7 +24,7 @@ def extract_parser(subargs):
         choices=["full", "partial"],
         help="Whether to fully scan the MongoDB collections or only partially.",
     )
-    parser.add_argument("-o", "--out", default="mongodb_schema.json")
+    parser.add_argument("-o", "--out", required=False)
 
 
 def translate_parser(subargs):
@@ -37,6 +42,7 @@ def export_parser(subargs):
     parser.add_argument("--host", default="localhost", help="MongoDB host")
     parser.add_argument("--port", default=27017, help="MongoDB port")
     parser.add_argument("--database", required=True, help="MongoDB database")
+    parser.add_argument("--limit", type=int, default=0, required=False, help="Limit export to N documents")
 
 
 def get_args():
@@ -61,32 +67,44 @@ def extract_to_file(args):
     """
 
     schema = extract(args)
-    rich.print(f"\nWriting resulting schema to {args.out}...")
-    with open(args.out, "w") as out:
-        json.dump(schema, out, indent=4)
-    rich.print("[green bold]Done![/green bold]")
+
+    out_label = args.out or "stdout"
+    rich.print(f"Writing resulting schema to {out_label}")
+    fp: t.TextIO
+    if args.out:
+        fp = open(args.out, "w")
+    else:
+        fp = sys.stdout
+    json.dump(schema, fp=fp, indent=4)
+    fp.flush()
 
 
 def translate_from_file(args):
     """
     Read in a JSON file and extract the schema from it.
     """
-
-    with open(args.infile) as f:
-        schema = json.load(f)
-        translate(schema)
+    fp: t.TextIO
+    if args.infile:
+        fp = open(args.infile, "r")
+    else:
+        fp = sys.stdin
+    schema = json.load(fp)
+    translate(schema)
 
 
 def export_to_stdout(args):
-    export(args)
+    sys.stdout.buffer.write(export(args).read())
 
 
 def main():
-    rich.print("\n[green bold]MongoDB[/green bold] -> [blue bold]CrateDB[/blue bold] Exporter :: Schema Extractor\n\n")
     args = get_args()
+    headline_prefix = "[green bold]MongoDB[/green bold] -> [blue bold]CrateDB[/blue bold] Exporter"
     if args.command == "extract":
+        rich.print(f"{headline_prefix} -> Schema Extractor")
         extract_to_file(args)
     elif args.command == "translate":
+        rich.print(f"{headline_prefix} -> Schema Translator")
         translate_from_file(args)
     elif args.command == "export":
+        rich.print(f"{headline_prefix} -> Data Exporter")
         export_to_stdout(args)

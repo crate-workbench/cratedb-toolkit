@@ -1,12 +1,14 @@
 import io
 import logging
+import sys
 import typing as t
 
 import pymongo
 import pymongo.database
-import rich
 from bson.raw_bson import RawBSONDocument
+from rich.console import Console
 from rich.syntax import Syntax
+from rich.table import Table
 
 from .export import collection_to_json
 from .extract import extract_schema_from_collection
@@ -14,6 +16,9 @@ from .translate import translate as translate_schema
 from .util import parse_input_numbers
 
 logger = logging.getLogger(__name__)
+
+console = Console(stderr=True)
+rich = console
 
 
 def gather_collections(database) -> t.List[str]:
@@ -23,7 +28,7 @@ def gather_collections(database) -> t.List[str]:
 
     collections = database.list_collection_names()
 
-    tbl = rich.table.Table(show_header=True, header_style="bold blue")
+    tbl = Table(show_header=True, header_style="bold blue")
     tbl.add_column("Id", width=3)
     tbl.add_column("Collection Name")
     tbl.add_column("Estimated Size")
@@ -33,9 +38,10 @@ def gather_collections(database) -> t.List[str]:
 
     rich.print(tbl)
 
-    rich.print("\nCollections to exclude: (eg: '0 1 2', '0, 1, 2', '0-2')")
+    rich.print("\nCollections to exclude: (eg: '0 1 2', '0, 1, 2', '0-2'). Leave empty for using all connections.")
 
-    collections_to_ignore = parse_input_numbers(input("> "))
+    sys.stderr.write("> ")
+    collections_to_ignore = parse_input_numbers(input())
     filtered_collections = []
     for i, c in enumerate(collections):
         if i not in collections_to_ignore:
@@ -80,11 +86,12 @@ def extract(args) -> t.Dict[str, t.Any]:
     else:
         rich.print("\nDo a [red bold]full[/red bold] collection scan?")
         rich.print("A full scan will iterate over all documents in the collection, a partial only one document. (Y/n)")
-        full = input(">  ").strip().lower()
+        sys.stderr.write("> ")
+        full = input().strip().lower()
 
         partial = full != "y"
 
-        rich.print(f"\nExecuting a [red bold]{'partial' if partial else 'full'}[/red bold] scan...")
+        rich.print(f"\nExecuting a [red bold]{'partial' if partial else 'full'}[/red bold] scan")
 
     schemas = {}
     for collection in filtered_collections:
@@ -103,7 +110,6 @@ def translate(schemas, schemaname: str = None) -> t.Dict[str, str]:
         syntax = Syntax(query, "sql")
         rich.print(f"Collection [blue bold]'{collection}'[/blue bold]:")
         rich.print(syntax)
-        rich.print()
     return result
 
 
@@ -115,6 +121,6 @@ def export(args) -> t.IO[bytes]:
     """
     buffer = io.BytesIO()
     client, db = get_mongodb_client_database(args, document_class=RawBSONDocument)
-    collection_to_json(db[args.collection], file=buffer)
+    collection_to_json(db[args.collection], fp=buffer, limit=args.limit)
     buffer.seek(0)
     return buffer

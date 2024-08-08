@@ -3,6 +3,7 @@
 
 ## Unreleased
 - MongoDB: Fix missing output on STDOUT for `migr8 export`
+- MongoDB: Improve timestamp parsing by using `python-dateutil`
 
 ## 2024/07/25 v0.0.16
 - `ctk load table`: Added support for MongoDB Change Streams

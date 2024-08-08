@@ -10,7 +10,7 @@ from cratedb_toolkit.util.database import DatabaseAdapter
 logger = logging.getLogger(__name__)
 
 
-def mongodb_copy(source_url, target_url, progress: bool = False):
+def mongodb_copy(source_url, target_url, limit: int = 0, progress: bool = False):
     """
     Synopsis
     --------
@@ -64,7 +64,9 @@ def mongodb_copy(source_url, target_url, progress: bool = False):
         f"Transferring data from MongoDB to CrateDB: "
         f"source={mongodb_collection_address.fullname}, target={cratedb_table_address.fullname}"
     )
-    export_args = argparse.Namespace(url=str(mongodb_uri), database=mongodb_database, collection=mongodb_collection)
+    export_args = argparse.Namespace(
+        url=str(mongodb_uri), database=mongodb_database, collection=mongodb_collection, limit=limit
+    )
     buffer = export(export_args)
     cr8_insert_json(infile=buffer, hosts=cratedb_address.httpuri, table=cratedb_table_address.fullname)
 

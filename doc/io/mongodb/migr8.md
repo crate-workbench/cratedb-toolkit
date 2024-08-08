@@ -216,5 +216,8 @@ Alternatively, use [cr8] to directly write the MongoDB collection into a CrateDB
     migr8 export --host localhost --port 27017 --database test_db --collection test | \
         cr8 insert-json --hosts localhost:4200 --table test
 
+In order to work on a smaller set of data for preview purposes, the `migr8 export`
+subcommand also accepts the `--limit` command-line option.
+
 
 [cr8]: https://github.com/mfussenegger/cr8

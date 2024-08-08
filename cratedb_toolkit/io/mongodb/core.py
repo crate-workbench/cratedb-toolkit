@@ -121,6 +121,6 @@ def export(args) -> t.IO[bytes]:
     """
     buffer = io.BytesIO()
     client, db = get_mongodb_client_database(args, document_class=RawBSONDocument)
-    collection_to_json(db[args.collection], file=buffer)
+    collection_to_json(db[args.collection], fp=buffer, limit=args.limit)
     buffer.seek(0)
     return buffer

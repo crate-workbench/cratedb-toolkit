@@ -42,6 +42,7 @@ def export_parser(subargs):
     parser.add_argument("--host", default="localhost", help="MongoDB host")
     parser.add_argument("--port", default=27017, help="MongoDB port")
     parser.add_argument("--database", required=True, help="MongoDB database")
+    parser.add_argument("--limit", type=int, default=0, required=False, help="Limit export to N documents")
 
 
 def get_args():

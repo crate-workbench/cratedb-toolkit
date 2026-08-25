@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- `ctk cfr sys-export` names the table it is reading in its progress bar, and logs
+  each read's row count, size and duration at debug level.
 - Fixed `ctk cfr sys-import` reporting success while CrateDB rejected rows.
   Thanks, @hammerhead.
 - Breaking change: `ctk cfr sys-import` exits non-zero when a table is not fully

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+- Fixed `ctk cfr sys-import` reporting success while CrateDB rejected rows.
+  Thanks, @hammerhead.
+- Breaking change: `ctk cfr sys-import` exits non-zero when a table is not fully
+  restored. For each such table, it logs how many rows arrived and the error messages
+  CrateDB returned.
+- `ctk cfr sys-import` drops and recreates each table from the bundle's definition.
+- `ctk cfr sys-export` declares the system columns CrateDB cannot index as unindexed,
+  so CrateDB accepts their values on import. Bundles written by earlier releases lack
+  these declarations, and CrateDB rejects those rows: export the bundle again, or
+  correct the `.sql` file named in the error message.
+- `ctk --debug cfr sys-import` reports failures with a traceback.
+
 ## 2026/08/17 v0.1.0
 - Fixed `ctk cfr jobstats` bugs related anonymization, views, ui, report 
   and collect arguments.

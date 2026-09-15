@@ -79,6 +79,13 @@ class SystemTableKnowledge:
         (SYS_SCHEMA, "summits"): ("static dataset shipped with the server"),
     }
 
+    # Logs each node keeps of its own recent entries. Read in full, they make the
+    # node answering the query hold every node's log in memory at once.
+    LOG_TABLES: t.Tuple[t.Tuple[str, str], ...] = (
+        (SYS_SCHEMA, "jobs_log"),
+        (SYS_SCHEMA, "operations_log"),
+    )
+
 
 class ExportSettings:
     """
@@ -105,6 +112,9 @@ class ExportSettings:
 
     # The bundle's self-description.
     MANIFEST_FILENAME = "manifest.json"
+
+    # How many of the most recent entries to read from each log table.
+    LOG_LIMIT = 1000
 
 
 class SystemTableInspector:
@@ -226,10 +236,12 @@ class SystemTableExporter(PathProvider):
         dburi: str,
         target: t.Union[Path],
         data_format: DataFormat = "jsonl",
+        log_limit: int = ExportSettings.LOG_LIMIT,
     ):
         super().__init__(target)
         self.dburi = dburi
         self.data_format = data_format
+        self.log_limit = log_limit
         self.adapter = DatabaseAdapter(dburi=self.dburi)
         self.info = InfoContainer(adapter=self.adapter)
         self.inspector = SystemTableInspector(dburi=self.dburi)
@@ -257,7 +269,13 @@ class SystemTableExporter(PathProvider):
         import polars as pl
 
         schema = schema or SystemTableKnowledge.SYS_SCHEMA
-        sql = f'SELECT * FROM "{schema}"."{tablename}"'  # noqa: S608
+        relation = f'"{schema}"."{tablename}"'
+        sql = f"SELECT * FROM {relation}"  # noqa: S608
+        if (schema, tablename) in SystemTableKnowledge.LOG_TABLES:
+            # `ORDER BY ended DESC LIMIT` on the rows themselves would make every node send
+            # its newest `log_limit` rows. A cut-off lets each node filter its own log instead.
+            cutoff = f"SELECT ended FROM {relation} ORDER BY ended DESC LIMIT 1 OFFSET {self.log_limit - 1}"  # noqa: S608
+            sql += f" WHERE ended >= COALESCE(({cutoff}), 0)"
         logger.debug(f"Running SQL: {sql}")
         return pl.read_database(
             query=sql,  # noqa: S608
@@ -350,6 +368,7 @@ class SystemTableExporter(PathProvider):
             "data_failures": self.data_failures,
             "definition_failures": self.definition_failures,
             "data_skipped": self.data_skipped,
+            "log_limit": self.log_limit,
             "redactions": [
                 {"schema": schema, "table": table, "columns": list(columns)}
                 for (schema, table), columns in SystemTableKnowledge.REDACTED_COLUMNS.items()

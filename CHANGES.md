@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+- Fixed `ctk cfr sys-export` stalling on large clusters. It exports the 1000 most
+  recent entries of `sys.jobs_log` and `sys.operations_log`, and `--log-limit`
+  sets another number.
+
 ## 2026/08/17 v0.1.0
 - Fixed `ctk cfr jobstats` bugs related anonymization, views, ui, report 
   and collect arguments.

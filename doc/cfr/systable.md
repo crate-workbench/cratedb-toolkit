@@ -49,6 +49,15 @@ ctk cfr --cluster-url="crate://localhost:4200/" \
 Give the target a `.tgz` or `.tar.gz` name to receive a single archive file
 instead.
 
+`sys.jobs_log` and `sys.operations_log` are exported with their 1000 most recent
+entries. Every node keeps its own log, and reading all of them at once makes the
+node answering the export hold every node's log in memory. Use `--log-limit` to
+collect a different number.
+```shell
+ctk cfr --cluster-url="crate://localhost:4200/" \
+    sys-export --log-limit=5000 ./diagnostics.tgz
+```
+
 Import a bundle's raw tables back into a cluster for analysis. Point `sys-import`
 at one per-schema subdirectory of the bundle — `sys` or `information_schema` —
 and give it a target schema to restore into.
@@ -84,7 +93,8 @@ bundle can be lined up against server logs. It also accounts for everything that
 is not in the bundle: `schema_failures` for tables whose `.sql` file is missing,
 `data_failures` for tables whose data could not be read, `definition_failures`
 for definitions that could not be captured, `data_skipped` for tables whose data
-is deliberately not collected, and `redactions` for values that were blanked out.
+is deliberately not collected, `log_limit` for how many log entries were
+collected, and `redactions` for values that were blanked out.
 
 ## What the bundle contains
 
